@@ -48,6 +48,7 @@ public class FloatingWidgetService extends Service {
     private ImageView mrect;
     private int initialX;
     private int initialY;
+    private Bitmap bmp2;
 
 
 
@@ -163,7 +164,7 @@ public class FloatingWidgetService extends Service {
 
 
                     //takeScreenshot();
-                    //  1   createSelection();
+
 
 
                     mActivePointerId = e.getPointerId(0);
@@ -229,6 +230,8 @@ public class FloatingWidgetService extends Service {
 
                             save.setVisibility(View.VISIBLE);
                             cancel.setVisibility(View.VISIBLE);
+
+
                             save.setOnClickListener(new View.OnClickListener() {
                                 @Override
                                 public void onClick(View v) {
@@ -261,6 +264,8 @@ public class FloatingWidgetService extends Service {
                         //Add code for launching application and positioning the widget to nearest edge.
 
 
+
+
                         return true;
                     case MotionEvent.ACTION_MOVE:
 
@@ -269,6 +274,12 @@ public class FloatingWidgetService extends Service {
                         float Ydiff = Math.round(event.getRawY() - initialTouchY);
 
                         Log.d("wtf", Float.toString(event.getRawX()));
+
+                        float x= event.getRawX();
+                        float y= event.getRawY();
+
+                        float diffx= x-startx;
+                        float diffy= y-starty;
 
 
                         //Calculate the X and Y coordinates of the view.
@@ -279,7 +290,10 @@ public class FloatingWidgetService extends Service {
 
                         if(flag==1){
 
-                            getAxis(event.getRawX(),event.getRawY());
+                            bmp2= createSelection(diffx,diffy);
+                            mrect.setImageBitmap(bmp2);
+
+                            //getAxis(event.getRawX(),event.getRawY());
 
                         }
 
@@ -349,7 +363,7 @@ public class FloatingWidgetService extends Service {
 
     }
 
-    private void createSelection(float diff_x, float diff_y){
+    private Bitmap createSelection(float diff_x, float diff_y){
 
         // Creating a selection box
 
@@ -368,8 +382,8 @@ public class FloatingWidgetService extends Service {
             //                for (int j=Math.round(y_longPress- (y_longPress-initialY));j<=y_longPress+ diff_y;j++){
 
             //for(int i=Math.round(0); i<x_longPress+ diff_x;i+=2){
-            for(int i=0; i<screenwidth;i++){
-                for (int j=Math.round(0);j<=y_longPress+ diff_y;j++){
+            for(int i=Math.round(startx); i<startx+diff_x;i+=2){
+                for (int j=Math.round(starty);j<=y_longPress+ diff_y;j++){
                     bitmap.setPixel(i,j, Color.CYAN);
                     if(i<300){
                         bitmap.setPixel(i,j,Color.YELLOW);
@@ -387,7 +401,9 @@ public class FloatingWidgetService extends Service {
         catch (Exception e){
             Log.e("Exception","ex",e);
         }
-        mrect.setImageBitmap(bitmap);
+
+        return bitmap;
+        //mrect.setImageBitmap(bitmap);
 
 
 
@@ -400,7 +416,7 @@ public class FloatingWidgetService extends Service {
 
     }
 
-    /*private void createSelection(float diff_x, float diff_y){
+    /*private void createSelection(){
 
         // Creating a selection box
 
@@ -420,8 +436,8 @@ public class FloatingWidgetService extends Service {
 
 
             // changed here..original were i=sx and j=sy-30
-            for(int i=Math.round(startx); i<startx+ diff_x;i+=2){
-                for (int j=Math.round(starty);j<=starty+ diff_y;j++){
+            for(int i=0; i<screenwidth;i+=2){
+                for (int j=0;j<=screenheight;j++){
                     bitmap.setPixel(i,j, Color.CYAN);
                     if(i<300){
                         bitmap.setPixel(i,j,Color.YELLOW);
@@ -465,33 +481,14 @@ public class FloatingWidgetService extends Service {
 
 
 
-        createSelection(diff_x,diff_y);
+        //createSelection(diff_x,diff_y);
 
 
 
     }
 
 
-    /*private void getAxis(float rawx, float rawy){
 
-
-
-        //Log.d("raw x:", Float.toString(rawx));
-        //Log.d("raw y:", Float.toString(rawy));
-
-        /*Log.d("diff x:", Float.toString(rawx-x_longPress));
-        Log.d("diff y:", Float.toString(rawy-y_longPress));
-
-        float diff_x= rawx-(startx);
-        float diff_y= rawy-(starty);
-
-
-
-        createSelection(diff_x,diff_y);
-
-
-
-    }*/
 
 
 }
