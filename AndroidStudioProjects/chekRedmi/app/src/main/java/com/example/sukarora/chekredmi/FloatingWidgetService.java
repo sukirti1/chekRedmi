@@ -8,7 +8,6 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
-import android.graphics.Rect;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
 import android.os.Build;
@@ -21,29 +20,25 @@ import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
-import android.view.ScaleGestureDetector;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import com.andremion.counterfab.CounterFab;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import static android.content.ContentValues.TAG;
 import static android.support.v4.app.ActivityCompat.startActivityForResult;
 
 public class FloatingWidgetService extends Service {
 
-    private WindowManager mWindowManager, windowManager1;
-    private View mOverlayView,mOverlayView1, selectionView, counterFab;
+    private WindowManager mWindowManager;
+    private View mOverlayView;
     private MediaProjection mMediaProjection;
     private static final int REQUEST_CODE = 1000;
+    CounterFab counterFab;
     private Button save, cancel;
     public final static int PERMISSION_CODE = 231;
     private int mActivePointerId;
@@ -54,7 +49,6 @@ public class FloatingWidgetService extends Service {
     private int initialX;
     private int initialY;
     private Bitmap bmp2;
-    private CounterFab head;
 
 
 
@@ -69,20 +63,15 @@ public class FloatingWidgetService extends Service {
     public void onCreate() {
         super.onCreate();
 
-        setTheme(R.style.Theme_AppCompat);
+        setTheme(R.style.AppTheme);
 
         mOverlayView = LayoutInflater.from(this).inflate(R.layout.overlay_layout, null);
+        mrect = (ImageView) mOverlayView.findViewById(R.id.iv);
         save = mOverlayView.findViewById(R.id.save);
         cancel= mOverlayView.findViewById(R.id.cancel);
-        head= mOverlayView.findViewById(R.id.fabHead);
 
         save.setVisibility(View.GONE);
         cancel.setVisibility(View.GONE);
-
-
-        mOverlayView1= LayoutInflater.from(this).inflate(R.layout.overlay_layout1, null);
-        mrect = (ImageView) mOverlayView1.findViewById(R.id.iv);
-
 
 
         int LAYOUT_FLAG;
@@ -100,15 +89,6 @@ public class FloatingWidgetService extends Service {
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT);
 
-        final WindowManager.LayoutParams params1 = new WindowManager.LayoutParams(
-                WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                LAYOUT_FLAG,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-                PixelFormat.TRANSLUCENT);
-
-
-
 
         //Specify the view position
         params.gravity = Gravity.TOP | Gravity.LEFT;        //Initially view will be added to top-left corner
@@ -119,17 +99,18 @@ public class FloatingWidgetService extends Service {
 
         mWindowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         mWindowManager.addView(mOverlayView, params);
-        mWindowManager.addView(mOverlayView1, params1);
-
-
 
         //screenwidth = mWindowManager.getDefaultDisplay().getWidth();
         //screenheight = mWindowManager.getDefaultDisplay().getHeight();
 
+        Point point = new Point();
+        mWindowManager.getDefaultDisplay().getSize(point);
+        //screenwidth = point.x;
+        //screenheight = point.y;
+
         final DisplayMetrics metrics = new DisplayMetrics();
         Display display = mWindowManager.getDefaultDisplay();
         Method mGetRawH = null, mGetRawW = null;
-
 
         try {
             // For JellyBean 4.2 (API 17) and onward
@@ -168,17 +149,8 @@ public class FloatingWidgetService extends Service {
 
 
 
-        counterFab =  mOverlayView.findViewById(R.id.firstView);
-        selectionView= mOverlayView1.findViewById(R.id.imageView);
-
-
+        counterFab = (CounterFab) mOverlayView.findViewById(R.id.fabHead);
         //counterFab.setCount(1);
-
-        counterFab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {}
-        });
-
 
         counterFab.setOnTouchListener(new View.OnTouchListener() {
             private float initialTouchX;
@@ -211,13 +183,28 @@ public class FloatingWidgetService extends Service {
 
 
 
-                    counterFab.setVisibility(View.GONE);
-
-                    selectionView.dispatchTouchEvent(e);
 
 
+                    /*params.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                            | WindowManager.LayoutParams.FLAG_DIM_BEHIND
+                            | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                            | WindowManager.LayoutParams.FLAG_FULLSCREEN;*/
 
-                    selectionView.setVisibility(View.VISIBLE);
+                    //mWindowManager.removeView(mOverlayView);
+
+                    //mWindowManager.addView(mOverlayView, params);
+
+                    params.flags &= ~WindowManager.LayoutParams.FLAG_FULLSCREEN;
+                    params.flags &= ~WindowManager.LayoutParams.FLAG_FULLSCREEN;
+
+                    params.width= WindowManager.LayoutParams.FILL_PARENT;
+                    params.height= WindowManager.LayoutParams.FILL_PARENT;
+
+
+                    mWindowManager.updateViewLayout(mOverlayView, params);
+
+                    counterFab.hide();
+
 
 
 
@@ -257,7 +244,7 @@ public class FloatingWidgetService extends Service {
                         return true;
                     case MotionEvent.ACTION_UP:
 
-                        /*endx= event.getRawX();
+                        endx= event.getRawX();
                         endy= event.getRawY();
 
                         if(flag==1){
@@ -270,9 +257,9 @@ public class FloatingWidgetService extends Service {
                                 @Override
                                 public void onClick(View v) {
 
-                                    save.setVisibility(View.GONE);
-                                    counterFab.hide();
-                                    //mOverlayView.setVisibility(View.GONE);
+                                    //save.setVisibility(View.GONE);
+                                    //counterFab.hide();
+                                    mOverlayView.setVisibility(View.GONE);
 
 
                                     takeScreenshot();
@@ -295,7 +282,7 @@ public class FloatingWidgetService extends Service {
 
                         // counterFab.show();
 
-                        //Add code for launching application and positioning the widget to nearest edge.*/
+                        //Add code for launching application and positioning the widget to nearest edge.
 
 
 
@@ -307,7 +294,7 @@ public class FloatingWidgetService extends Service {
                         float Xdiff = Math.round(event.getRawX() - initialTouchX);
                         float Ydiff = Math.round(event.getRawY() - initialTouchY);
 
-                        //Log.d("wtf", Float.toString(event.getRawX()));
+                        Log.d("wtf", Float.toString(event.getRawX()));
 
                         float x= event.getRawX();
                         float y= event.getRawY();
@@ -322,14 +309,14 @@ public class FloatingWidgetService extends Service {
 
 
 
-                        /*if(flag==1){
+                        if(flag==1){
 
                             bmp2= createSelection(diffx,diffy);
                             mrect.setImageBitmap(bmp2);
 
                             //getAxis(event.getRawX(),event.getRawY());
 
-                        }*/
+                        }
 
 
                         //Update the layout with new X & Y coordinates
@@ -343,251 +330,6 @@ public class FloatingWidgetService extends Service {
         });
 
 
-
-        selectionView.setOnTouchListener(new View.OnTouchListener() {
-            private float initialTouchX;
-            private float initialTouchY;
-            private int flag=0;
-
-
-            GestureDetector gestureDetector = new GestureDetector(FloatingWidgetService.this, new GestureDetector.SimpleOnGestureListener() {
-                @Override
-                public void onLongPress(MotionEvent e) {
-
-                    Log.d("hi we are here", "in selection View");
-
-
-                }
-
-                @Override
-                public boolean onDown(MotionEvent e) {
-                    // TODO Auto-generated method stub
-                    Log.d("....",".......");
-
-                    startx = e.getRawX();
-                    starty = e.getRawY();
-
-                    Log.d("startx",Float.toString(startx));
-                    Log.d("starty",Float.toString(starty));
-
-
-
-
-                    //onTouchEvent(e);
-                    return true;
-                }
-
-                @Override
-                public boolean onSingleTapUp(MotionEvent e) {
-                    if(e.getAction() == MotionEvent.ACTION_UP){
-
-                        // Do what you want
-
-                        Log.d("up","here");
-                        return true;
-                    }
-                    return false;
-                }
-
-
-
-                @Override
-                public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY)
-                {
-                    //mView.setTranslationX(e2.getRawX() - mMotionDownX);
-                    //mView.setTranslationY(e2.getRawY() - mMotionDownY);
-                    Log.d("onscrool",".......");
-                    return true;
-                }
-
-
-            });
-
-            public boolean onTouchEvent(MotionEvent event) {
-
-                Log.d("in onTouch", "onTouch");
-
-                int X = (int) event.getX();
-                int Y = (int) event.getY();
-                int eventaction = event.getAction();
-
-                eventaction= MotionEvent.ACTION_DOWN;
-
-
-
-                switch (eventaction) {
-                    case MotionEvent.ACTION_DOWN:
-
-                        break;
-
-                    case MotionEvent.ACTION_MOVE:
-                        Log.d("Action:","move");
-                        break;
-
-                    case MotionEvent.ACTION_UP:
-                        Log.d("Action:","up");
-                        break;
-                }
-                return true;
-            }
-
-
-
-
-            ScaleGestureDetector mScaleDetector = new ScaleGestureDetector(FloatingWidgetService.this, new ScaleGestureDetector.OnScaleGestureListener() {
-                @Override
-                public boolean onScale(ScaleGestureDetector scaleGestureDetector) {
-                    //mScaleFactor = scaleGestureDetector.getScaleFactor();
-                    Log.d("scale","hi");
-
-                    return true;
-                }
-
-                @Override
-                public boolean onScaleBegin(ScaleGestureDetector scaleGestureDetector) {
-
-                    Log.d("scale","hi");
-                    return true;
-                }
-
-                @Override
-                public void onScaleEnd(ScaleGestureDetector scaleGestureDetector) {
-                    Log.d("scale","hi");
-
-
-                }
-            });
-
-
-
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-
-                gestureDetector.onTouchEvent(event);
-
-
-
-
-                //mScaleDetector.onTouchEvent(event);
-
-
-
-                switch (event.getActionMasked()) {
-                    case MotionEvent.ACTION_DOWN:
-
-                        //remember the initial position.
-
-                        initialX = params.x;
-                        initialY = params.y;
-
-
-                        //get the touch location
-                        initialTouchX = event.getRawX();
-                        initialTouchY = event.getRawY();
-
-                        startx = event.getRawX();
-                        starty = event.getRawY();
-
-
-
-                        return false;
-                    case MotionEvent.ACTION_UP:
-
-                        endx= event.getRawX();
-                        endy= event.getRawY();
-
-                        Log.d("are we", "ever here");
-
-                        if(flag==1){
-
-                            counterFab.setVisibility(View.VISIBLE);
-                            head.hide();
-
-
-                            save.setOnClickListener(new View.OnClickListener() {
-                                @Override
-                                public void onClick(View v) {
-
-                                    selectionView.setVisibility(View.GONE);
-                                    counterFab.setVisibility(View.GONE);
-                                    //mOverlayView.setVisibility(View.GONE);
-
-
-                                    takeScreenshot();
-
-                                }
-                            });
-
-                            cancel.setOnClickListener(new View.OnClickListener() {
-                                @Override
-                                public void onClick(View v) {
-
-                                    selectionView.setVisibility(View.GONE);
-                                    counterFab.setVisibility(View.GONE);
-                                    onCreate();
-                                }
-                            });
-                            flag=0;
-
-                        }
-
-
-                        // counterFab.show();
-
-                        //Add code for launching application and positioning the widget to nearest edge.*/
-
-
-
-
-                        return true;
-                    case MotionEvent.ACTION_MOVE:
-
-                        Log.d("What about", "Action move");
-
-
-                        float Xdiff = Math.round(event.getRawX() - initialTouchX);
-                        float Ydiff = Math.round(event.getRawY() - initialTouchY);
-
-                        //Log.d("wtf", Float.toString(event.getRawX()));
-
-                        float x= event.getRawX();
-                        float y= event.getRawY();
-
-                        float diffx= x-startx;
-                        float diffy= y-starty;
-
-
-                        //Calculate the X and Y coordinates of the view.
-                        params.x = initialX + (int) Xdiff;
-                        params.y = initialY + (int) Ydiff;
-
-
-
-                        /*if(flag==1){
-
-                            bmp2= createSelection(diffx,diffy);
-                            mrect.setImageBitmap(bmp2);
-
-                            //getAxis(event.getRawX(),event.getRawY());
-
-                        }*/
-
-
-                        //Update the layout with new X & Y coordinates
-                        mWindowManager.updateViewLayout(mOverlayView1, params1);
-
-
-                        return true;
-                }
-                return false;
-            }
-        });
-
-
-
-
-
-
     }
 
     @Override
@@ -597,8 +339,6 @@ public class FloatingWidgetService extends Service {
         stopSelf();
         if (mOverlayView != null)
             mWindowManager.removeView(mOverlayView);
-        if (mOverlayView1 != null)
-            mWindowManager.removeView(mOverlayView1);
     }
 
     private void takeScreenshot(){
@@ -663,8 +403,8 @@ public class FloatingWidgetService extends Service {
             //                for (int j=Math.round(y_longPress- (y_longPress-initialY));j<=y_longPress+ diff_y;j++){
 
             //for(int i=Math.round(0); i<x_longPress+ diff_x;i+=2){
-            for(int i=Math.round(0); i<startx+diff_x;i+=2){
-                for (int j=Math.round(0);j<=y_longPress+ diff_y;j++){
+            for(int i=Math.round(startx); i<startx+diff_x;i+=2){
+                for (int j=Math.round(starty);j<=y_longPress+ diff_y;j++){
                     bitmap.setPixel(i,j, Color.CYAN);
                     if(i<300){
                         bitmap.setPixel(i,j,Color.YELLOW);
