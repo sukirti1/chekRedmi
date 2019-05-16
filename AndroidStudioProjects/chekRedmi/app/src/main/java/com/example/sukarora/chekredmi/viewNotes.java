@@ -5,22 +5,29 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.v4.view.GestureDetectorCompat;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import java.io.File;
 
-public class viewNotes extends Activity {
+public class viewNotes extends Activity{
 
     private String STORE_DIRECTORY;
 
-    @Override
+
+
+        @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.view_notes);
+
 
         File externalFilesDir = getExternalFilesDir(null);
 
@@ -66,5 +73,23 @@ public class viewNotes extends Activity {
 
 
 
+
+
+
     }
+
+    final GestureDetector gDetector  = new GestureDetector(new GestureDetector.SimpleOnGestureListener() {
+        public void onLongPress(MotionEvent e) {
+            Log.d("hi", "Longpress detected");
+        }
+    });
+
+
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        return gDetector.onTouchEvent(event);
+    }
+
+
 }
