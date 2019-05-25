@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.support.annotation.NonNull;
+import android.support.v4.content.FileProvider;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -13,6 +14,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -25,6 +27,8 @@ public class recyclerViewAdapter extends RecyclerView.Adapter<recyclerViewAdapte
 
     private ArrayList<String> paths;
     private String STORE_DIRECTORY;
+
+
 
 
     public recyclerViewAdapter( ArrayList<String> paths) {
@@ -40,7 +44,7 @@ public class recyclerViewAdapter extends RecyclerView.Adapter<recyclerViewAdapte
     }
 
     @Override
-    public void onBindViewHolder(ProductViewHolder holder, int position) {
+    public void onBindViewHolder(final ProductViewHolder holder, int position) {
         Bitmap bmp = BitmapFactory.decodeFile(paths.get(position));
         holder.imageView.setImageBitmap(bmp);
         //holder.imageView.setOnCreateContextMenuListener(this);
@@ -63,13 +67,25 @@ public class recyclerViewAdapter extends RecyclerView.Adapter<recyclerViewAdapte
 
 
 
+
                 MenuItem delete= menu.add("Delete");
+                menu.add("Shuffle");
                 delete.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
                     @Override
                     public boolean onMenuItemClick(MenuItem item) {
 
-                        Log.d("in delete","menu");
+                        //Log.d("in delete","menu");
 
+                        AdapterView.AdapterContextMenuInfo menuInfo = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+                        long arrayAdapterPosition = menuInfo.position;
+                        deleteFile(menuInfo.position);
+                        
+
+
+
+
+
+                        //Log.d("deleted:",String.valueOf(deleted));
                         
 
                         return true;
@@ -86,6 +102,12 @@ public class recyclerViewAdapter extends RecyclerView.Adapter<recyclerViewAdapte
     @Override
     public int getItemCount() {
         return paths.size();
+    }
+
+    private void deleteFile(long id){
+
+        Log.d("in delete", String.valueOf(id));
+
     }
 
 
